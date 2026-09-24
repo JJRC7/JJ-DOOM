@@ -4,7 +4,7 @@ Shooter 3D retro al estilo del DOOM clásico, hecho con raycasting en un solo ar
 
 ## Cómo jugar
 
-Abre `index.html` en el navegador (doble clic), o actívalo con GitHub Pages en **Settings → Pages → Branch: `main` / `(root)`** y juega en `https://jjrc7.github.io/JJ-DOOM/`.
+Abre `index.html` en el navegador (doble clic), o actívalo con GitHub Pages en **Settings → Pages → Branch: `main` / `(root)`** y juega en `https://jjrc7.github.io/jj-doom/`.
 
 ## Controles
 
