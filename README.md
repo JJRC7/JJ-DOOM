@@ -27,3 +27,7 @@ En el móvil aparecen un joystick y los botones FUEGO, USAR, ARMA y MAPA.
 - **Armas:** pistola, escopeta, ametralladora y lanzacohetes.
 - **Enemigos:** zombi, sargento, imp, demonio, espectro, alma perdida, cacodemonio y Barón del Infierno.
 - Llaves roja y azul, barriles explosivos, zonas al aire libre con cielo y selección de niveles desbloqueados.
+
+## Versión para Unreal Engine 5
+
+En la carpeta [`Unreal/`](Unreal/README.md) está el mismo juego en C++ para Unreal Engine 5, con iluminación Lumen, sombras dinámicas, linterna y niebla. Las instrucciones para abrirlo están en [`Unreal/README.md`](Unreal/README.md).
