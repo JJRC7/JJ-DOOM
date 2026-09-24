@@ -1,0 +1,14 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.4",
+	"Category": "",
+	"Description": "JJ-DOOM: shooter en primera persona al estilo DOOM",
+	"Modules": [
+		{
+			"Name": "JJDoom",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [ "Engine", "AIModule" ]
+		}
+	]
+}
