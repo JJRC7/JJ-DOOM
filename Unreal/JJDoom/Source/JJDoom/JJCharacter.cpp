@@ -67,16 +67,16 @@ void AJJCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	MuzzleLight->SetIntensityUnits(ELightUnits::Candelas);
-	MuzzleLight->SetIntensity(120.f);
+	MuzzleLight->SetIntensity(400.f);
 	MuzzleLight->SetAttenuationRadius(1500.f);
 	MuzzleLight->SetLightColor(FLinearColor(1.f, 0.75f, 0.35f));
 	MuzzleLight->SetVisibility(false);
 
 	Flashlight->SetIntensityUnits(ELightUnits::Candelas);
-	Flashlight->SetIntensity(400.f);
+	Flashlight->SetIntensity(150.f);
 	Flashlight->SetAttenuationRadius(3500.f);
-	Flashlight->SetInnerConeAngle(12.f);
-	Flashlight->SetOuterConeAngle(28.f);
+	Flashlight->SetInnerConeAngle(8.f);
+	Flashlight->SetOuterConeAngle(32.f);
 	Flashlight->SetLightColor(FLinearColor(1.f, 0.95f, 0.85f));
 
 	UpdateWeaponModel();

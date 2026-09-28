@@ -55,7 +55,7 @@ public:
 
 	// Intensidad de las lámparas del techo (candelas).
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "JJ|Luz")
-	float LampCandelas = 35.f;
+	float LampCandelas = 250.f;
 
 private:
 	UInstancedStaticMeshComponent* GetISM(int32 Key, const FLinearColor& Color, UMaterialInterface* Override, bool bCollision);

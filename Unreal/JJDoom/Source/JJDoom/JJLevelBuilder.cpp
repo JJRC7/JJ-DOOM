@@ -267,6 +267,14 @@ void AJJLevelBuilder::SetupPostProcess()
 	S.ColorSaturation = FVector4(1.08f, 1.f, 0.92f, 1.f);
 	S.bOverride_AmbientOcclusionIntensity = true;
 	S.AmbientOcclusionIntensity = 0.8f;
+	// Exposición fija (EV100 = 4, interior en penumbra): sin esto la cámara sube el brillo
+	// sola en las zonas oscuras y la imagen se ve blanca y "quemada".
+	S.bOverride_AutoExposureMinBrightness = true;
+	S.AutoExposureMinBrightness = 4.f;
+	S.bOverride_AutoExposureMaxBrightness = true;
+	S.AutoExposureMaxBrightness = 4.f;
+	S.bOverride_AutoExposureBias = true;
+	S.AutoExposureBias = 0.f;
 }
 
 void AJJLevelBuilder::AddLamp(int32 X, int32 Y, const FLinearColor& Color)
@@ -512,7 +520,7 @@ void AJJLevelBuilder::Build(int32 LevelIndex)
 	const bool bSky = L.Sky.Num() > 0;
 	Sun->SetWorldRotation(FRotator(-14.f, 35.f, 0.f));
 	Sun->SetLightColor(FLinearColor(1.f, 0.42f, 0.22f));
-	Sun->SetIntensity(bSky ? 5.f : 0.f);
+	Sun->SetIntensity(bSky ? 40.f : 0.f);
 	Sun->SetAtmosphereSunLight(true);
 	SkyLight->SetIntensity(bSky ? 1.f : 0.3f);
 	Fog->SetFogDensity(0.035f);
