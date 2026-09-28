@@ -5,6 +5,7 @@
 #include "JJEnemy.h"
 #include "JJHUD.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/SkeletalMesh.h"
 #include "Materials/MaterialInterface.h"
 #include "UObject/ConstructorHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -26,6 +27,18 @@ AJJGameMode::AJJGameMode()
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialFinder(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 	BasicMeshes = { CubeFinder.Object, SphereFinder.Object, CylinderFinder.Object, ConeFinder.Object };
 	BasicMaterial = MaterialFinder.Object;
+}
+
+const FJJMonsterVisual* AJJGameMode::FindMonsterVisual(EJJEnemyKind Kind) const
+{
+	const FJJMonsterVisual* Visual = MonsterVisuals.Find(Kind);
+	return (Visual && Visual->Mesh != nullptr) ? Visual : nullptr;
+}
+
+const FJJWeaponVisual* AJJGameMode::FindWeaponVisual(EJJWeapon Weapon) const
+{
+	const FJJWeaponVisual* Visual = WeaponVisuals.Find(Weapon);
+	return (Visual && (Visual->StaticMesh != nullptr || Visual->SkeletalMesh != nullptr)) ? Visual : nullptr;
 }
 
 AJJGameMode* AJJGameMode::Get(const UObject* WorldContext)

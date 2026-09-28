@@ -37,17 +37,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "JJ|Modelos")
 	TMap<EJJWeapon, FJJWeaponVisual> WeaponVisuals;
 
-	const FJJMonsterVisual* FindMonsterVisual(EJJEnemyKind Kind) const
-	{
-		const FJJMonsterVisual* V = MonsterVisuals.Find(Kind);
-		return V && V->Mesh ? V : nullptr;
-	}
-
-	const FJJWeaponVisual* FindWeaponVisual(EJJWeapon Weapon) const
-	{
-		const FJJWeaponVisual* V = WeaponVisuals.Find(Weapon);
-		return V && (V->StaticMesh || V->SkeletalMesh) ? V : nullptr;
-	}
+	const FJJMonsterVisual* FindMonsterVisual(EJJEnemyKind Kind) const;
+	const FJJWeaponVisual* FindWeaponVisual(EJJWeapon Weapon) const;
 
 	void ShowMessage(const FString& Text, float Seconds = 3.f);
 	void AddKill(AJJEnemy* Enemy);
