@@ -15,6 +15,24 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "Engine/World.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "Animation/AnimInstance.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/PackageName.h"
+
+namespace
+{
+	template <class T>
+	T* JJLoadIfPresent(const TCHAR* ObjectPath)
+	{
+		if (!FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(FString(ObjectPath))))
+		{
+			return nullptr;
+		}
+		return LoadObject<T>(nullptr, ObjectPath);
+	}
+}
 
 AJJEnemy::AJJEnemy()
 {
@@ -75,6 +93,67 @@ void AJJEnemy::BeginPlay()
 	BuildBody();
 }
 
+// Si el proyecto tiene el maniquí de Unreal (paquete "Third Person"), los enemigos humanoides
+// usan ese personaje animado, teñido con el color del enemigo, y caen como muñeco de trapo al morir.
+bool AJJEnemy::TryUseMannequin(const FLinearColor& Color, float Scale)
+{
+	static const TCHAR* MeshPaths[] = {
+		TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"),
+		TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"),
+		TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn"),
+	};
+	static const TCHAR* AnimPaths[] = {
+		TEXT("/Game/Characters/Mannequins/Animations/ABP_Manny.ABP_Manny_C"),
+		TEXT("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed_C"),
+		TEXT("/Game/Characters/Mannequins/Animations/ABP_Quinn.ABP_Quinn_C"),
+	};
+	USkeletalMesh* SkeletalMesh = nullptr;
+	for (const TCHAR* Path : MeshPaths)
+	{
+		SkeletalMesh = JJLoadIfPresent<USkeletalMesh>(Path);
+		if (SkeletalMesh)
+		{
+			break;
+		}
+	}
+	if (!SkeletalMesh)
+	{
+		return false;
+	}
+	UClass* AnimClass = nullptr;
+	for (const TCHAR* Path : AnimPaths)
+	{
+		if (FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(FString(Path))))
+		{
+			AnimClass = LoadClass<UAnimInstance>(nullptr, Path);
+			if (AnimClass)
+			{
+				break;
+			}
+		}
+	}
+
+	USkeletalMeshComponent* Skin = GetMesh();
+	Skin->SetSkeletalMeshAsset(SkeletalMesh);
+	if (AnimClass)
+	{
+		Skin->SetAnimInstanceClass(AnimClass);
+	}
+	Skin->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()), FRotator(0.f, -90.f, 0.f));
+	Skin->SetRelativeScale3D(FVector(Scale));
+	UMaterialInstanceDynamic* Paint = JJAssets::ColorMaterial(Skin, Color);
+	for (int32 I = 0; I < Skin->GetNumMaterials(); ++I)
+	{
+		Skin->SetMaterial(I, Paint);
+	}
+	Skin->SetVisibility(true);
+	Body->SetVisibility(false);
+	Head->SetVisibility(false);
+	Eyes->SetVisibility(false);
+	bMannequin = true;
+	return true;
+}
+
 void AJJEnemy::BuildBody()
 {
 	using namespace JJAssets;
@@ -98,6 +177,7 @@ void AJJEnemy::BuildBody()
 		SetupPart(Body, Cylinder(), D.Color, FVector(0.75f, 0.5f, 1.25f) * S, FVector(0.f, 0.f, -28.f * S));
 		SetupPart(Head, Sphere(), Skin, FVector(0.42f) * S, FVector(0.f, 0.f, 58.f * S));
 		SetupPart(Eyes, Cube(), EyeColor, FVector(0.05f, 0.28f, 0.05f) * S, FVector(19.f * S, 0.f, 62.f * S));
+		TryUseMannequin(Kind == EJJEnemyKind::Baron || Kind == EJJEnemyKind::Imp ? Skin : D.Color, S);
 		if (Kind == EJJEnemyKind::Baron || Kind == EJJEnemyKind::Imp)
 		{
 			const bool bBaron = Kind == EJJEnemyKind::Baron;
@@ -434,8 +514,25 @@ void AJJEnemy::Die()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
-	Body->SetVisibility(true);
-	Head->SetVisibility(true);
+	if (bMannequin)
+	{
+		// Muñeco de trapo: el cuerpo cae con física real.
+		USkeletalMeshComponent* Skin = GetMesh();
+		Skin->SetCollisionProfileName(TEXT("Ragdoll"));
+		Skin->SetAllBodiesSimulatePhysics(true);
+		Skin->SetSimulatePhysics(true);
+		Skin->WakeAllRigidBodies();
+		Skin->AddImpulse(-GetActorForwardVector() * 250.f + FVector(0.f, 0.f, 150.f), NAME_None, true);
+		HornL->SetVisibility(false);
+		HornR->SetVisibility(false);
+		Glow->SetVisibility(false);
+		State = EJJEnemyState::Dead;
+	}
+	else
+	{
+		Body->SetVisibility(true);
+		Head->SetVisibility(true);
+	}
 	AJJFlash::Spawn(GetWorld(), GetActorLocation(), FLinearColor(0.35f, 0.f, 0.f), 0.5f, 0.f, 0.35f);
 
 	const FVector Drop(GetActorLocation().X, GetActorLocation().Y, 40.f);

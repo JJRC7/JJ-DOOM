@@ -12,6 +12,8 @@ class USkyLightComponent;
 class UExponentialHeightFogComponent;
 class USkyAtmosphereComponent;
 class AJJDoor;
+class APostProcessVolume;
+class UPointLightComponent;
 
 // Construye el nivel a partir del mapa de texto: paredes, suelo, techo, luces, puertas, enemigos y objetos.
 // También calcula el camino hacia el jugador para los enemigos que no lo ven.
@@ -57,7 +59,10 @@ public:
 
 private:
 	UInstancedStaticMeshComponent* GetISM(int32 Key, const FLinearColor& Color, UMaterialInterface* Override, bool bCollision);
+	void AddBox(int32 Key, const FLinearColor& Color, UMaterialInterface* Material, const FVector& Center, const FVector& Size, bool bCollision);
 	void AddLamp(int32 X, int32 Y, const FLinearColor& Color);
+	void SetupPostProcess();
+	UMaterialInterface* WallMaterialFor(int32 Type) const;
 	void ComputeFlow();
 
 	UPROPERTY()
@@ -83,6 +88,15 @@ private:
 
 	UPROPERTY()
 	TMap<int32, TObjectPtr<AJJDoor>> Doors;
+
+	UPROPERTY()
+	TObjectPtr<APostProcessVolume> PostVolume;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UPointLightComponent>> FlickerLamps;
+
+	TArray<float> FlickerBase;
+	float FlickerTimer = 0.f;
 
 	TArray<uint8> Grid;
 	TArray<int32> Flow;

@@ -59,17 +59,32 @@ También funciona con mando (Xbox/PlayStation).
 | `JJHUD` | Interfaz: salud, armadura, munición, llaves, mensajes. |
 | `JJDoor`, `JJExitSwitch`, `JJPickup`, `JJBarrel`, `JJProjectile`, `JJFlash` | Puertas, salida, objetos, barriles, proyectiles y destellos. |
 
-## Hacerlo más realista
+## Hacerlo más realista (sin programar)
 
-El código deja preparado el cambio de materiales sin tocar C++:
+El juego detecta solo estos paquetes gratuitos de Unreal y los usa si están en el proyecto:
 
-1. En el editor: **Add → Add Feature or Content Pack → Starter Content** (o descarga materiales de
-   **Quixel Megascans / Fab**, gratis con Unreal).
-2. Crea un **Blueprint Class** hijo de `JJLevelBuilder` (por ejemplo `BP_Builder`) y en sus detalles
-   rellena **Wall Materials** (índice = tipo de pared): 1 ladrillo, 2 metal, 3 piedra, 4 carne,
-   10 panel técnico, 11 madera, 12 mármol. Asigna también **Floor Material** y **Ceiling Material**.
-   Ejemplos del Starter Content: `M_Brick_Clay_New`, `M_Metal_Steel`, `M_Rock_Slate`, `M_Wood_Floor_Walnut_Polished`.
-3. Crea un Blueprint hijo de `JJGameMode` (`BP_GameMode`), pon **Builder Class = BP_Builder** y selecciónalo en
+| Paquete | Qué cambia |
+|---|---|
+| **Starter Content** | Paredes, suelos, techos, puertas, zócalos y vigas con materiales reales: ladrillo, metal, piedra, madera, mármol, hormigón, baldosas... |
+| **Third Person** | Zombis, sargentos, imps y el Barón pasan a ser personajes 3D **animados** (caminan y corren) y caen como **muñeco de trapo** al morir. |
+
+Cómo añadirlos (una sola vez):
+
+1. Abre el proyecto en el editor de Unreal.
+2. Abajo, abre el **Content Drawer** (Ctrl + Espacio) y pulsa **+ Add** (o **Añadir**).
+3. Elige **Add Feature or Content Pack...**
+4. En la pestaña **Content**, elige **Starter Content** → **Add to Project**.
+5. Vuelve a abrir **Add Feature or Content Pack...**, pestaña **Blueprint**, elige **Third Person** → **Add to Project**.
+6. Pulsa **Play**. No hace falta tocar nada más.
+
+Además, siempre (con o sin paquetes) el juego usa niebla volumétrica con haces de luz, resplandor,
+viñeta, grano de película, lámparas que parpadean, zócalos, molduras y vigas en el techo.
+
+### Usar tus propios materiales
+
+1. Crea un **Blueprint Class** hijo de `JJLevelBuilder` (por ejemplo `BP_Builder`) y rellena **Wall Materials**
+   (índice = tipo de pared): 1 ladrillo, 2 metal, 3 piedra, 4 carne, 10 panel técnico, 11 madera, 12 mármol.
+   También **Floor Material** y **Ceiling Material**. Tienen prioridad sobre el Starter Content.
+2. Crea un Blueprint hijo de `JJGameMode` (`BP_GameMode`), pon **Builder Class = BP_Builder** y selecciónalo en
    **Project Settings → Maps & Modes → Default GameMode**.
-4. Para monstruos y armas realistas hay que sustituir las formas básicas por personajes con animaciones
-   (por ejemplo de **Fab** o **Mixamo**); eso ya requiere trabajo en el editor.
+3. Materiales gratuitos de alta calidad: **Fab** (incluye Quixel Megascans), desde el propio editor.

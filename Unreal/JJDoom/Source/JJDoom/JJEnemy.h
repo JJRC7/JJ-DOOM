@@ -31,6 +31,7 @@ public:
 
 private:
 	void BuildBody();
+	bool TryUseMannequin(const FLinearColor& Color, float Scale);
 	bool CanSee(const APawn* Player) const;
 	void FaceTowards(const FVector& Where);
 	void StartAttack(bool bClose);
@@ -66,6 +67,7 @@ private:
 	bool bSeesPlayer = false;
 	bool bFired = false;
 	bool bMelee = false;
+	bool bMannequin = false;
 	FVector ChargeDir = FVector::ZeroVector;
 	FVector DeathStart = FVector::ZeroVector;
 	float DeathYaw = 0.f;

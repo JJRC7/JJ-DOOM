@@ -3,6 +3,7 @@
 #include "JJCharacter.h"
 #include "JJGameMode.h"
 #include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInterface.h"
 
 AJJDoor::AJJDoor()
 {
@@ -14,12 +15,16 @@ AJJDoor::AJJDoor()
 	Band->SetupAttachment(RootComponent);
 }
 
-void AJJDoor::Setup(EJJKey InKey, bool bAlongX)
+void AJJDoor::Setup(EJJKey InKey, bool bAlongX, UMaterialInterface* PanelMaterial)
 {
 	Key = InKey;
 	const FVector PanelScale = bAlongX ? FVector(4.f, 0.5f, 4.f) : FVector(0.5f, 4.f, 4.f);
 	JJAssets::SetupPart(Panel, JJAssets::Cube(), FLinearColor(0.22f, 0.23f, 0.25f), PanelScale, FVector(0.f, 0.f, 200.f));
 	Panel->SetCollisionProfileName(TEXT("BlockAll"));
+	if (PanelMaterial)
+	{
+		Panel->SetMaterial(0, PanelMaterial);
+	}
 
 	const FLinearColor BandColor = Key == EJJKey::Red ? FLinearColor(0.8f, 0.02f, 0.02f)
 		: Key == EJJKey::Blue ? FLinearColor(0.02f, 0.1f, 0.9f) : FLinearColor(0.85f, 0.6f, 0.02f);

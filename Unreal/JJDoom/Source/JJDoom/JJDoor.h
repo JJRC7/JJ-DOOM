@@ -7,6 +7,7 @@
 
 class UStaticMeshComponent;
 class AJJCharacter;
+class UMaterialInterface;
 
 // Puerta que sube hasta el techo al usarla (E). Puede pedir la llave roja o la azul.
 UCLASS()
@@ -17,7 +18,7 @@ class JJDOOM_API AJJDoor : public AActor
 public:
 	AJJDoor();
 
-	void Setup(EJJKey InKey, bool bAlongX);
+	void Setup(EJJKey InKey, bool bAlongX, UMaterialInterface* PanelMaterial = nullptr);
 	bool TryOpen(AJJCharacter* By);
 	bool IsPassable() const { return OpenAlpha > 0.6f; }
 

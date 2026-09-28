@@ -16,6 +16,8 @@
 #include "Components/SkyAtmosphereComponent.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/PostProcessVolume.h"
+#include "Misc/PackageName.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Pawn.h"
 #include "EngineUtils.h"
@@ -95,6 +97,46 @@ namespace
 		}
 	}
 
+	// Materiales del paquete gratuito "Starter Content" (si se ha añadido al proyecto).
+	UMaterialInterface* JJStarterMaterial(const TCHAR* Name)
+	{
+		const FString Package = FString::Printf(TEXT("/Game/StarterContent/Materials/%s"), Name);
+		if (!FPackageName::DoesPackageExist(Package))
+		{
+			return nullptr;
+		}
+		return LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("%s.%s"), *Package, Name));
+	}
+
+	const TCHAR* JJStarterWallName(int32 Type)
+	{
+		switch (Type)
+		{
+		case 1: return TEXT("M_Brick_Clay_Old");
+		case 2: return TEXT("M_Metal_Steel");
+		case 3: return TEXT("M_Brick_Cut_Stone");
+		case 4: return TEXT("M_Brick_Hewn_Stone");
+		case 10: return TEXT("M_Tech_Panel");
+		case 11: return TEXT("M_Wood_Pine");
+		case 12: return TEXT("M_Rock_Marble_Polished");
+		default: return nullptr;
+		}
+	}
+
+	const TCHAR* JJStarterFloorName(int32 Level)
+	{
+		static const TCHAR* Names[] = { TEXT("M_Concrete_Tiles"), TEXT("M_Cobblestone_Rough"), TEXT("M_Concrete_Poured"),
+			TEXT("M_Ceramic_Tile_Checker"), TEXT("M_Rock_Basalt") };
+		return Names[FMath::Clamp(Level, 0, 4)];
+	}
+
+	const TCHAR* JJStarterCeilingName(int32 Level)
+	{
+		static const TCHAR* Names[] = { TEXT("M_Concrete_Panels"), TEXT("M_Rock_Basalt"), TEXT("M_Concrete_Panels"),
+			TEXT("M_Wood_Walnut"), TEXT("M_Rock_Basalt") };
+		return Names[FMath::Clamp(Level, 0, 4)];
+	}
+
 	template <class T>
 	void JJDestroyAll(UWorld* World)
 	{
@@ -122,6 +164,7 @@ AJJLevelBuilder::AJJLevelBuilder()
 
 	Fog = CreateDefaultSubobject<UExponentialHeightFogComponent>(TEXT("Fog"));
 	Fog->SetupAttachment(Root);
+	Fog->bEnableVolumetricFog = true;
 
 	Atmosphere = CreateDefaultSubobject<USkyAtmosphereComponent>(TEXT("Atmosphere"));
 	Atmosphere->SetupAttachment(Root);
@@ -179,6 +222,53 @@ UInstancedStaticMeshComponent* AJJLevelBuilder::GetISM(int32 Key, const FLinearC
 	return ISM;
 }
 
+void AJJLevelBuilder::AddBox(int32 Key, const FLinearColor& Color, UMaterialInterface* Material, const FVector& Center, const FVector& Size, bool bCollision)
+{
+	GetISM(Key, Color, Material, bCollision)->AddInstance(FTransform(FRotator::ZeroRotator, Center, Size / 100.f));
+}
+
+UMaterialInterface* AJJLevelBuilder::WallMaterialFor(int32 Type) const
+{
+	if (WallMaterials.IsValidIndex(Type) && WallMaterials[Type])
+	{
+		return WallMaterials[Type].Get();
+	}
+	const TCHAR* Name = JJStarterWallName(Type);
+	return Name ? JJStarterMaterial(Name) : nullptr;
+}
+
+void AJJLevelBuilder::SetupPostProcess()
+{
+	if (PostVolume)
+	{
+		return;
+	}
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	PostVolume = GetWorld()->SpawnActor<APostProcessVolume>(APostProcessVolume::StaticClass(), FTransform::Identity, Params);
+	if (!PostVolume)
+	{
+		return;
+	}
+	// Aspecto de película: resplandor, viñeta, grano, aberración cromática y algo más de contraste.
+	PostVolume->bUnbound = true;
+	FPostProcessSettings& S = PostVolume->Settings;
+	S.bOverride_BloomIntensity = true;
+	S.BloomIntensity = 1.2f;
+	S.bOverride_VignetteIntensity = true;
+	S.VignetteIntensity = 0.6f;
+	S.bOverride_FilmGrainIntensity = true;
+	S.FilmGrainIntensity = 0.2f;
+	S.bOverride_SceneFringeIntensity = true;
+	S.SceneFringeIntensity = 1.2f;
+	S.bOverride_ColorContrast = true;
+	S.ColorContrast = FVector4(1.12f, 1.12f, 1.12f, 1.f);
+	S.bOverride_ColorSaturation = true;
+	S.ColorSaturation = FVector4(1.08f, 1.f, 0.92f, 1.f);
+	S.bOverride_AmbientOcclusionIntensity = true;
+	S.AmbientOcclusionIntensity = 0.8f;
+}
+
 void AJJLevelBuilder::AddLamp(int32 X, int32 Y, const FLinearColor& Color)
 {
 	UPointLightComponent* Light = NewObject<UPointLightComponent>(this);
@@ -189,8 +279,15 @@ void AJJLevelBuilder::AddLamp(int32 X, int32 Y, const FLinearColor& Color)
 	Light->SetAttenuationRadius(1800.f);
 	Light->SetLightColor(Color);
 	Light->SetCastShadows(true);
+	Light->SetVolumetricScatteringIntensity(1.5f);
 	Light->RegisterComponent();
 	Lamps.Add(Light);
+	// Algunas lámparas parpadean.
+	if (FMath::FRand() < 0.2f)
+	{
+		FlickerLamps.Add(Light);
+		FlickerBase.Add(LampCandelas);
+	}
 
 	// La lámpara visible en el techo.
 	GetISM(102, FLinearColor(1.f, 0.95f, 0.8f), nullptr, false)
@@ -223,6 +320,8 @@ void AJJLevelBuilder::Clear()
 		}
 	}
 	Lamps.Empty();
+	FlickerLamps.Empty();
+	FlickerBase.Empty();
 	Doors.Empty();
 	Grid.Empty();
 	Flow.Empty();
@@ -257,7 +356,35 @@ void AJJLevelBuilder::Build(int32 LevelIndex)
 	{
 		return (X < 0 || Y < 0 || X >= W || Y >= H) ? TCHAR('#') : L.Map[Y][X];
 	};
-	const FVector TileScale(Cell / 100.f, Cell / 100.f, 0.2f);
+	const int32 LevelNum = FMath::Clamp(LevelIndex, 0, Levels.Num() - 1);
+	UMaterialInterface* FloorMat = FloorMaterial ? FloorMaterial.Get() : JJStarterMaterial(JJStarterFloorName(LevelNum));
+	UMaterialInterface* CeilingMat = CeilingMaterial ? CeilingMaterial.Get() : JJStarterMaterial(JJStarterCeilingName(LevelNum));
+	UMaterialInterface* TrimMat = JJStarterMaterial(TEXT("M_Metal_Rust"));
+	UMaterialInterface* BeamMat = JJStarterMaterial(TEXT("M_Wood_Oak"));
+	UMaterialInterface* DoorMat = JJStarterMaterial(TEXT("M_Metal_Burnished_Steel"));
+	const float Half = Cell * 0.5f;
+
+	// Suelo y techo en baldosas de 2x2 por casilla (las texturas se ven a mejor escala).
+	auto AddFloorAndCeiling = [&](int32 X, int32 Y, bool bCeiling)
+	{
+		for (int32 IX = 0; IX < 2; ++IX)
+		{
+			for (int32 IY = 0; IY < 2; ++IY)
+			{
+				const FVector Offset((IX - 0.5f) * Half, (IY - 0.5f) * Half, 0.f);
+				AddBox(100, L.FloorColor, FloorMat, CellCenter(X, Y, -10.f) + Offset, FVector(Half, Half, 20.f), true);
+				if (bCeiling)
+				{
+					AddBox(101, L.CeilingColor, CeilingMat, CellCenter(X, Y, WallHeight + 10.f) + Offset, FVector(Half, Half, 20.f), true);
+				}
+			}
+		}
+	};
+	auto IsOpen = [&](int32 X, int32 Y)
+	{
+		const int32 T = JJWallType(CharAt(X, Y));
+		return T == 0 || JJIsDoor(T);
+	};
 
 	for (int32 Y = 0; Y < H; ++Y)
 	{
@@ -275,12 +402,11 @@ void AJJLevelBuilder::Build(int32 LevelIndex)
 					AJJDoor* Door = World->SpawnActor<AJJDoor>(AJJDoor::StaticClass(), CellCenter(X, Y), FRotator::ZeroRotator);
 					if (Door)
 					{
-						Door->Setup(Type == 7 ? EJJKey::Red : Type == 9 ? EJJKey::Blue : EJJKey::None, bAlongX);
+						Door->Setup(Type == 7 ? EJJKey::Red : Type == 9 ? EJJKey::Blue : EJJKey::None, bAlongX, DoorMat);
 						Doors.Add(I, Door);
 					}
 					// Suelo y techo bajo la puerta (se esconde en el techo al abrirse).
-					GetISM(100, L.FloorColor, FloorMaterial, true)->AddInstance(FTransform(FRotator::ZeroRotator, CellCenter(X, Y, -10.f), TileScale));
-					GetISM(101, L.CeilingColor, CeilingMaterial, true)->AddInstance(FTransform(FRotator::ZeroRotator, CellCenter(X, Y, WallHeight + 10.f), TileScale));
+					AddFloorAndCeiling(X, Y, true);
 				}
 				else if (Type == 5)
 				{
@@ -288,20 +414,64 @@ void AJJLevelBuilder::Build(int32 LevelIndex)
 				}
 				else
 				{
-					UMaterialInterface* Override = WallMaterials.IsValidIndex(Type) ? WallMaterials[Type].Get() : nullptr;
-					GetISM(Type, JJWallColor(Type), Override, true)
-						->AddInstance(FTransform(FRotator::ZeroRotator, CellCenter(X, Y, WallHeight * 0.5f), FVector(Cell / 100.f, Cell / 100.f, WallHeight / 100.f)));
+					// Solo las paredes que se ven (junto a una casilla abierta), en bloques de 2x2x2
+					// para que ladrillos y paneles tengan un tamaño realista.
+					bool bVisible = false;
+					for (int32 DY = -1; DY <= 1 && !bVisible; ++DY)
+					{
+						for (int32 DX = -1; DX <= 1 && !bVisible; ++DX)
+						{
+							bVisible = (DX != 0 || DY != 0) && IsOpen(X + DX, Y + DY);
+						}
+					}
+					if (bVisible)
+					{
+						UMaterialInterface* Material = WallMaterialFor(Type);
+						for (int32 IX = 0; IX < 2; ++IX)
+						{
+							for (int32 IY = 0; IY < 2; ++IY)
+							{
+								for (int32 IZ = 0; IZ < 2; ++IZ)
+								{
+									const FVector Center = CellCenter(X, Y, (IZ + 0.5f) * WallHeight * 0.5f) + FVector((IX - 0.5f) * Half, (IY - 0.5f) * Half, 0.f);
+									AddBox(Type, JJWallColor(Type), Material, Center, FVector(Half, Half, WallHeight * 0.5f), true);
+								}
+							}
+						}
+					}
 				}
 				continue;
 			}
 
-			GetISM(100, L.FloorColor, FloorMaterial, true)->AddInstance(FTransform(FRotator::ZeroRotator, CellCenter(X, Y, -10.f), TileScale));
+			AddFloorAndCeiling(X, Y, !Outdoor[I]);
 			if (!Outdoor[I])
 			{
-				GetISM(101, L.CeilingColor, CeilingMaterial, true)->AddInstance(FTransform(FRotator::ZeroRotator, CellCenter(X, Y, WallHeight + 10.f), TileScale));
 				if (X % 3 == 1 && Y % 3 == 1)
 				{
 					AddLamp(X, Y, L.LightColor);
+				}
+				// Vigas del techo cada dos casillas.
+				if (X % 2 == 0)
+				{
+					AddBox(104, FLinearColor(0.12f, 0.07f, 0.04f), BeamMat, CellCenter(X, Y, WallHeight - 18.f), FVector(28.f, Cell, 36.f), false);
+				}
+			}
+			// Zócalo y moldura en las paredes que rodean la casilla.
+			static const int32 NX[4] = { 1, -1, 0, 0 };
+			static const int32 NY[4] = { 0, 0, 1, -1 };
+			for (int32 K = 0; K < 4; ++K)
+			{
+				const int32 NT = JJWallType(CharAt(X + NX[K], Y + NY[K]));
+				if (NT == 0 || JJIsDoor(NT) || NT == 5)
+				{
+					continue;
+				}
+				const FVector Edge = CellCenter(X, Y) + FVector(NX[K] * (Half - 6.f), NY[K] * (Half - 6.f), 0.f);
+				const FVector Size = NX[K] != 0 ? FVector(12.f, Cell, 1.f) : FVector(Cell, 12.f, 1.f);
+				AddBox(103, FLinearColor(0.08f, 0.07f, 0.06f), TrimMat, Edge + FVector(0.f, 0.f, 16.f), FVector(Size.X, Size.Y, 32.f), false);
+				if (!Outdoor[I])
+				{
+					AddBox(103, FLinearColor(0.08f, 0.07f, 0.06f), TrimMat, Edge + FVector(0.f, 0.f, WallHeight - 14.f), FVector(Size.X, Size.Y, 28.f), false);
 				}
 			}
 
@@ -336,6 +506,8 @@ void AJJLevelBuilder::Build(int32 LevelIndex)
 		}
 	}
 
+	SetupPostProcess();
+
 	// Luz del cielo: atardecer rojizo en los niveles con zonas al aire libre.
 	const bool bSky = L.Sky.Num() > 0;
 	Sun->SetWorldRotation(FRotator(-14.f, 35.f, 0.f));
@@ -352,6 +524,19 @@ void AJJLevelBuilder::Build(int32 LevelIndex)
 void AJJLevelBuilder::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	FlickerTimer -= DeltaSeconds;
+	if (FlickerTimer <= 0.f)
+	{
+		FlickerTimer = 0.06f;
+		for (int32 I = 0; I < FlickerLamps.Num(); ++I)
+		{
+			if (FlickerLamps[I])
+			{
+				const float Factor = FMath::FRand() < 0.12f ? FMath::FRandRange(0.02f, 0.4f) : 1.f;
+				FlickerLamps[I]->SetIntensity(FlickerBase[I] * Factor);
+			}
+		}
+	}
 	FlowTimer -= DeltaSeconds;
 	if (FlowTimer <= 0.f)
 	{
