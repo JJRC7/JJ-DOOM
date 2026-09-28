@@ -9,7 +9,7 @@ public class JJDoom : ModuleRules
 
 		// Las versiones nuevas de Visual Studio avisan de macros no definidas (C4668) dentro de las
 		// cabeceras del motor; no son errores de este proyecto, así que se silencian.
-		UndefinedIdentifierWarningLevel = WarningLevel.Off;
+		bEnableUndefinedIdentifierWarnings = false;
 		bWarningsAsErrors = false;
 	}
 }
