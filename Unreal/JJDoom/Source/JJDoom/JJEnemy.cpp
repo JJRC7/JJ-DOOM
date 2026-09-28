@@ -6,6 +6,7 @@
 #include "JJProjectile.h"
 #include "JJFlash.h"
 #include "JJPickup.h"
+#include "Animation/AnimationAsset.h"
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -154,8 +155,52 @@ bool AJJEnemy::TryUseMannequin(const FLinearColor& Color, float Scale)
 	return true;
 }
 
+// Modelo real asignado en el Blueprint del modo de juego (por ejemplo, un monstruo de Fab).
+bool AJJEnemy::TryUseCustomModel()
+{
+	const AJJGameMode* GM = AJJGameMode::Get(this);
+	const FJJMonsterVisual* Visual = GM ? GM->FindMonsterVisual(Kind) : nullptr;
+	if (!Visual)
+	{
+		return false;
+	}
+	USkeletalMeshComponent* Skin = GetMesh();
+	Skin->SetSkeletalMeshAsset(Visual->Mesh);
+	Skin->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + Visual->HeightOffset),
+		FRotator(0.f, Visual->YawOffset, 0.f));
+	Skin->SetRelativeScale3D(FVector(Visual->Scale));
+	Skin->SetVisibility(true);
+	if (Visual->AnimBlueprint)
+	{
+		Skin->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+		Skin->SetAnimInstanceClass(Visual->AnimBlueprint);
+	}
+	else
+	{
+		WalkAnim = Visual->WalkAnimation;
+		AttackAnim = Visual->AttackAnimation;
+		if (WalkAnim)
+		{
+			Skin->PlayAnimation(WalkAnim, true);
+		}
+	}
+	DeathAnim = Visual->DeathAnimation;
+	for (UStaticMeshComponent* Part : { Body.Get(), Head.Get(), Eyes.Get(), HornL.Get(), HornR.Get() })
+	{
+		Part->SetVisibility(false);
+	}
+	Glow->SetVisibility(false);
+	bMannequin = true;
+	bCustomModel = true;
+	return true;
+}
+
 void AJJEnemy::BuildBody()
 {
+	if (TryUseCustomModel())
+	{
+		return;
+	}
 	using namespace JJAssets;
 	const FJJEnemyDef& D = FJJEnemyDef::Get(Kind);
 	const float S = D.Scale;
@@ -265,6 +310,10 @@ void AJJEnemy::StartAttack(bool bClose)
 	bMelee = bClose;
 	StateTime = bClose ? 0.45f : 0.6f;
 	FireAt = bClose ? 0.2f : 0.3f;
+	if (AttackAnim)
+	{
+		GetMesh()->PlayAnimation(AttackAnim, false);
+	}
 	Glow->SetIntensity(Glow->Intensity * 3.f);
 }
 
@@ -348,6 +397,10 @@ void AJJEnemy::Tick(float DeltaSeconds)
 			State = EJJEnemyState::Chase;
 			Cooldown = FMath::FRandRange(D.CooldownMin, D.CooldownMax);
 			Glow->SetIntensity(Glow->Intensity / 3.f);
+			if (AttackAnim && WalkAnim)
+			{
+				GetMesh()->PlayAnimation(WalkAnim, true);
+			}
 		}
 		return;
 	case EJJEnemyState::Charge:
@@ -514,7 +567,12 @@ void AJJEnemy::Die()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
-	if (bMannequin)
+	if (bCustomModel && DeathAnim)
+	{
+		GetMesh()->PlayAnimation(DeathAnim, false);
+		State = EJJEnemyState::Dead;
+	}
+	else if (bMannequin && GetMesh()->GetPhysicsAsset())
 	{
 		// Muñeco de trapo: el cuerpo cae con física real.
 		USkeletalMeshComponent* Skin = GetMesh();
@@ -528,7 +586,7 @@ void AJJEnemy::Die()
 		Glow->SetVisibility(false);
 		State = EJJEnemyState::Dead;
 	}
-	else
+	else if (!bMannequin)
 	{
 		Body->SetVisibility(true);
 		Head->SetVisibility(true);

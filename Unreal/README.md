@@ -43,6 +43,7 @@ Lo que aporta Unreal frente a la versión web:
 | F | Linterna |
 | 1-4 / rueda | Cambiar de arma |
 | Enter | Continuar tras terminar el nivel o al morir |
+| + / − (o Re Pág / Av Pág) | Subir / bajar el brillo |
 
 También funciona con mando (Xbox/PlayStation).
 
@@ -88,3 +89,24 @@ viñeta, grano de película, lámparas que parpadean, zócalos, molduras y vigas
 2. Crea un Blueprint hijo de `JJGameMode` (`BP_GameMode`), pon **Builder Class = BP_Builder** y selecciónalo en
    **Project Settings → Maps & Modes → Default GameMode**.
 3. Materiales gratuitos de alta calidad: **Fab** (incluye Quixel Megascans), desde el propio editor.
+
+## Monstruos y armas reales (modelos de Fab)
+
+El juego puede usar cualquier personaje 3D con animaciones y cualquier modelo de arma, sin programar:
+
+1. **Descarga los modelos**: en el editor pulsa el botón **Fab** (arriba del Content Drawer), busca
+   monstruos o armas (filtra por **Free** para los gratuitos; por ejemplo los personajes *Paragon* de Epic)
+   y pulsa **Add to Project**.
+2. **Crea el Blueprint del modo de juego**: en el Content Drawer, **+ Añadir → Clase Blueprint**, busca
+   **JJGameMode** en "Todas las clases" y llámalo `BP_GameMode`.
+3. Ábrelo y en el panel **Detalles**, sección **JJ | Modelos**:
+   - **Monster Visuals**: pulsa **+**, elige el tipo de enemigo (Zombie, Imp, Demon, Caco, Baron...) y asigna:
+     - **Mesh**: la malla con esqueleto del monstruo (icono rosa, *Skeletal Mesh*).
+     - **Anim Blueprint**: su Animation Blueprint si el paquete trae uno, **o** bien
+       **Walk Animation** / **Attack Animation** / **Death Animation** con animaciones sueltas.
+     - **Scale**, **Yaw Offset** (giro; normalmente -90) y **Height Offset** si queda grande, girado o hundido.
+   - **Weapon Visuals**: pulsa **+**, elige el arma (Pistol, Shotgun, Chaingun, Rocket) y asigna
+     **Static Mesh** o **Skeletal Mesh**, y ajusta **Offset**, **Rotation** y **Scale** hasta que se vea bien en pantalla.
+4. **Compila y guarda** el Blueprint, y en **Editar → Configuración del proyecto → Mapas y modos**
+   pon **Default GameMode = BP_GameMode**.
+5. Pulsa **Play**. Los tipos que no tengan modelo asignado siguen usando el maniquí o las formas básicas.

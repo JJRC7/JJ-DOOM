@@ -12,6 +12,8 @@
 #include "Components/PointLightComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "JJLevelBuilder.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/DamageType.h"
 #include "Kismet/GameplayStatics.h"
@@ -47,6 +49,11 @@ AJJCharacter::AJJCharacter()
 	GunBody = MakePart(TEXT("GunBody"));
 	GunBarrel = MakePart(TEXT("GunBarrel"));
 	GunHand = MakePart(TEXT("GunHand"));
+	WeaponStatic = MakePart(TEXT("WeaponStatic"));
+	WeaponSkeletal = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponSkeletal"));
+	WeaponSkeletal->SetupAttachment(Camera);
+	WeaponSkeletal->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponSkeletal->SetCastShadow(false);
 
 	MuzzleLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("MuzzleLight"));
 	MuzzleLight->SetupAttachment(Camera);
@@ -117,6 +124,8 @@ void AJJCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Input->BindAction(TEXT("Weapon4"), IE_Pressed, this, &AJJCharacter::Weapon4);
 	Input->BindAction(TEXT("NextWeapon"), IE_Pressed, this, &AJJCharacter::NextWeapon);
 	Input->BindAction(TEXT("PrevWeapon"), IE_Pressed, this, &AJJCharacter::PrevWeapon);
+	Input->BindAction(TEXT("BrightnessUp"), IE_Pressed, this, &AJJCharacter::BrightnessUp);
+	Input->BindAction(TEXT("BrightnessDown"), IE_Pressed, this, &AJJCharacter::BrightnessDown);
 }
 
 bool AJJCharacter::CanAct() const
@@ -206,6 +215,19 @@ void AJJCharacter::Weapon4() { SelectWeapon(EJJWeapon::Rocket); }
 void AJJCharacter::NextWeapon() { CycleWeapon(1); }
 void AJJCharacter::PrevWeapon() { CycleWeapon(-1); }
 
+void AJJCharacter::BrightnessUp() { ChangeBrightness(1.f); }
+void AJJCharacter::BrightnessDown() { ChangeBrightness(-1.f); }
+
+void AJJCharacter::ChangeBrightness(float Steps)
+{
+	AJJGameMode* GM = AJJGameMode::Get(this);
+	if (GM && GM->GetBuilder())
+	{
+		const int32 Level = GM->GetBuilder()->ChangeBrightness(Steps);
+		GM->ShowMessage(FString::Printf(TEXT("Brillo: %d / 16"), Level), 1.5f);
+	}
+}
+
 void AJJCharacter::CycleWeapon(int32 Step)
 {
 	int32 Index = static_cast<int32>(Inv.Current);
@@ -293,6 +315,35 @@ void AJJCharacter::UpdateWeaponModel()
 		Part->SetCastShadow(false);
 	}
 	MuzzleLight->SetRelativeLocation(BarrelBase + FVector(45.f, 0.f, 0.f));
+
+	// Modelo real del arma, si se asignó en el Blueprint del modo de juego.
+	const AJJGameMode* GM = AJJGameMode::Get(this);
+	const FJJWeaponVisual* Visual = GM ? GM->FindWeaponVisual(Inv.Current) : nullptr;
+	WeaponStatic->SetVisibility(false);
+	WeaponSkeletal->SetVisibility(false);
+	if (Visual)
+	{
+		for (UStaticMeshComponent* Part : { GunBody.Get(), GunBarrel.Get(), GunHand.Get() })
+		{
+			Part->SetVisibility(false);
+		}
+		WeaponBase = Visual->Offset;
+		if (Visual->SkeletalMesh)
+		{
+			WeaponSkeletal->SetSkeletalMeshAsset(Visual->SkeletalMesh);
+			WeaponSkeletal->SetRelativeLocationAndRotation(WeaponBase, Visual->Rotation);
+			WeaponSkeletal->SetRelativeScale3D(FVector(Visual->Scale));
+			WeaponSkeletal->SetVisibility(true);
+		}
+		else
+		{
+			WeaponStatic->SetStaticMesh(Visual->StaticMesh);
+			WeaponStatic->SetRelativeLocationAndRotation(WeaponBase, Visual->Rotation);
+			WeaponStatic->SetRelativeScale3D(FVector(Visual->Scale));
+			WeaponStatic->SetVisibility(true);
+		}
+		MuzzleLight->SetRelativeLocation(WeaponBase + FVector(50.f, 0.f, 5.f));
+	}
 }
 
 void AJJCharacter::Tick(float DeltaSeconds)
@@ -326,6 +377,8 @@ void AJJCharacter::Tick(float DeltaSeconds)
 	GunBody->SetRelativeLocation(BodyBase + Offset);
 	GunBarrel->SetRelativeLocation(BarrelBase + Offset);
 	GunHand->SetRelativeLocation(HandBase + Offset);
+	WeaponStatic->SetRelativeLocation(WeaponBase + Offset);
+	WeaponSkeletal->SetRelativeLocation(WeaponBase + Offset);
 }
 
 void AJJCharacter::FireWeapon()

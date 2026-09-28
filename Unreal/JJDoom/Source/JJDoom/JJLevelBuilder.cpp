@@ -270,11 +270,22 @@ void AJJLevelBuilder::SetupPostProcess()
 	// Exposición fija (EV100 = 4, interior en penumbra): sin esto la cámara sube el brillo
 	// sola en las zonas oscuras y la imagen se ve blanca y "quemada".
 	S.bOverride_AutoExposureMinBrightness = true;
-	S.AutoExposureMinBrightness = 4.f;
+	S.AutoExposureMinBrightness = ExposureEV;
 	S.bOverride_AutoExposureMaxBrightness = true;
-	S.AutoExposureMaxBrightness = 4.f;
+	S.AutoExposureMaxBrightness = ExposureEV;
 	S.bOverride_AutoExposureBias = true;
 	S.AutoExposureBias = 0.f;
+}
+
+int32 AJJLevelBuilder::ChangeBrightness(float Steps)
+{
+	ExposureEV = FMath::Clamp(ExposureEV - Steps * 0.5f, 0.f, 8.f);
+	if (PostVolume)
+	{
+		PostVolume->Settings.AutoExposureMinBrightness = ExposureEV;
+		PostVolume->Settings.AutoExposureMaxBrightness = ExposureEV;
+	}
+	return FMath::RoundToInt((8.f - ExposureEV) * 2.f);
 }
 
 void AJJLevelBuilder::AddLamp(int32 X, int32 Y, const FLinearColor& Color)

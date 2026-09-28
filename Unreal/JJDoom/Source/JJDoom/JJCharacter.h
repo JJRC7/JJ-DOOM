@@ -9,6 +9,7 @@ class UCameraComponent;
 class UStaticMeshComponent;
 class UPointLightComponent;
 class USpotLightComponent;
+class USkeletalMeshComponent;
 
 // Jugador en primera persona: movimiento, armas, linterna, recoger objetos y usar puertas.
 UCLASS()
@@ -57,6 +58,9 @@ private:
 	void NextWeapon();
 	void PrevWeapon();
 	void CycleWeapon(int32 Step);
+	void BrightnessUp();
+	void BrightnessDown();
+	void ChangeBrightness(float Steps);
 
 	void FireWeapon();
 	void AutoSwitch();
@@ -76,6 +80,12 @@ private:
 	TObjectPtr<UStaticMeshComponent> GunHand;
 
 	UPROPERTY()
+	TObjectPtr<UStaticMeshComponent> WeaponStatic;
+
+	UPROPERTY()
+	TObjectPtr<USkeletalMeshComponent> WeaponSkeletal;
+
+	UPROPERTY()
 	TObjectPtr<UPointLightComponent> MuzzleLight;
 
 	UPROPERTY()
@@ -84,6 +94,7 @@ private:
 	FVector BodyBase = FVector::ZeroVector;
 	FVector BarrelBase = FVector::ZeroVector;
 	FVector HandBase = FVector::ZeroVector;
+	FVector WeaponBase = FVector::ZeroVector;
 	bool bDead = false;
 	bool bFiring = false;
 	float Cooldown = 0.f;

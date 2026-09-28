@@ -7,6 +7,7 @@
 
 class UStaticMeshComponent;
 class UPointLightComponent;
+class UAnimationAsset;
 
 // Monstruo con IA sencilla: espera, persigue (en línea recta si te ve, siguiendo el mapa si no),
 // ataca, se estremece al recibir daño y muere.
@@ -32,6 +33,7 @@ public:
 private:
 	void BuildBody();
 	bool TryUseMannequin(const FLinearColor& Color, float Scale);
+	bool TryUseCustomModel();
 	bool CanSee(const APawn* Player) const;
 	void FaceTowards(const FVector& Where);
 	void StartAttack(bool bClose);
@@ -56,6 +58,16 @@ private:
 	UPROPERTY()
 	TObjectPtr<UPointLightComponent> Glow;
 
+	// Animaciones sueltas del modelo real (si no usa Animation Blueprint).
+	UPROPERTY()
+	TObjectPtr<UAnimationAsset> WalkAnim;
+
+	UPROPERTY()
+	TObjectPtr<UAnimationAsset> AttackAnim;
+
+	UPROPERTY()
+	TObjectPtr<UAnimationAsset> DeathAnim;
+
 	EJJEnemyState State = EJJEnemyState::Idle;
 	float Health = 20.f;
 	float Cooldown = 1.f;
@@ -68,6 +80,7 @@ private:
 	bool bFired = false;
 	bool bMelee = false;
 	bool bMannequin = false;
+	bool bCustomModel = false;
 	FVector ChargeDir = FVector::ZeroVector;
 	FVector DeathStart = FVector::ZeroVector;
 	float DeathYaw = 0.f;
