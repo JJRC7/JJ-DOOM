@@ -6,6 +6,7 @@
 #include "JJProjectile.h"
 #include "JJFlash.h"
 #include "JJPickup.h"
+#include "JJFX.h"
 #include "Animation/AnimationAsset.h"
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
@@ -567,31 +568,11 @@ void AJJEnemy::Die()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
-	if (bCustomModel && DeathAnim)
-	{
-		GetMesh()->PlayAnimation(DeathAnim, false);
-		State = EJJEnemyState::Dead;
-	}
-	else if (bMannequin && GetMesh()->GetPhysicsAsset())
-	{
-		// Muñeco de trapo: el cuerpo cae con física real.
-		USkeletalMeshComponent* Skin = GetMesh();
-		Skin->SetCollisionProfileName(TEXT("Ragdoll"));
-		Skin->SetAllBodiesSimulatePhysics(true);
-		Skin->SetSimulatePhysics(true);
-		Skin->WakeAllRigidBodies();
-		Skin->AddImpulse(-GetActorForwardVector() * 250.f + FVector(0.f, 0.f, 150.f), NAME_None, true);
-		HornL->SetVisibility(false);
-		HornR->SetVisibility(false);
-		Glow->SetVisibility(false);
-		State = EJJEnemyState::Dead;
-	}
-	else if (!bMannequin)
-	{
-		Body->SetVisibility(true);
-		Head->SetVisibility(true);
-	}
-	AJJFlash::Spawn(GetWorld(), GetActorLocation(), FLinearColor(0.35f, 0.f, 0.f), 0.5f, 0.f, 0.35f);
+	// Al morir, el enemigo explota y desaparece.
+	JJFX::Explosion(GetWorld(), GetActorLocation(), FMath::Max(0.6f, FJJEnemyDef::Get(Kind).Scale));
+	SetActorHiddenInGame(true);
+	State = EJJEnemyState::Dead;
+	SetLifeSpan(0.3f);
 
 	const FVector Drop(GetActorLocation().X, GetActorLocation().Y, 40.f);
 	if (Kind == EJJEnemyKind::Zombie)

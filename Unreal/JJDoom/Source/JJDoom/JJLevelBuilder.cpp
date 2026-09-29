@@ -164,7 +164,7 @@ AJJLevelBuilder::AJJLevelBuilder()
 
 	Fog = CreateDefaultSubobject<UExponentialHeightFogComponent>(TEXT("Fog"));
 	Fog->SetupAttachment(Root);
-	Fog->bEnableVolumetricFog = true;
+	Fog->bEnableVolumetricFog = false;
 
 	Atmosphere = CreateDefaultSubobject<USkyAtmosphereComponent>(TEXT("Atmosphere"));
 	Atmosphere->SetupAttachment(Root);
@@ -297,7 +297,8 @@ void AJJLevelBuilder::AddLamp(int32 X, int32 Y, const FLinearColor& Color)
 	Light->SetIntensity(LampCandelas);
 	Light->SetAttenuationRadius(1800.f);
 	Light->SetLightColor(Color);
-	Light->SetCastShadows(true);
+	// Solo algunas lámparas proyectan sombras (las sombras son lo más costoso).
+	Light->SetCastShadows(Lamps.Num() % 3 == 0);
 	Light->SetVolumetricScatteringIntensity(1.5f);
 	Light->RegisterComponent();
 	Lamps.Add(Light);

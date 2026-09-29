@@ -1,6 +1,7 @@
 #include "JJProjectile.h"
 #include "JJAssets.h"
 #include "JJFlash.h"
+#include "JJFX.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
@@ -85,7 +86,7 @@ void AJJProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 		TArray<AActor*> Ignore;
 		Ignore.Add(this);
 		UGameplayStatics::ApplyRadialDamage(this, 128.f, Where, 1000.f, UDamageType::StaticClass(), Ignore, this, InstigatorController, false, ECC_Visibility);
-		AJJFlash::Spawn(GetWorld(), Where, FLinearColor(1.f, 0.45f, 0.1f), 2.2f, 2500.f, 0.6f);
+		JJFX::Explosion(GetWorld(), Where, 1.f);
 	}
 	else
 	{
@@ -94,6 +95,7 @@ void AJJProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			UGameplayStatics::ApplyPointDamage(OtherActor, Damage, GetActorForwardVector(), Hit, InstigatorController, this, UDamageType::StaticClass());
 		}
 		AJJFlash::Spawn(GetWorld(), Where, Color, 0.6f, 300.f, 0.3f);
+		JJFX::Sparks(GetWorld(), Where, Hit.ImpactNormal);
 	}
 	Destroy();
 }

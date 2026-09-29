@@ -1,6 +1,7 @@
 #include "JJBarrel.h"
 #include "JJAssets.h"
 #include "JJFlash.h"
+#include "JJFX.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
 #include "GameFramework/DamageType.h"
@@ -53,7 +54,7 @@ float AJJBarrel::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 void AJJBarrel::Explode()
 {
 	const FVector Where = GetActorLocation() + FVector(0.f, 0.f, 60.f);
-	AJJFlash::Spawn(GetWorld(), Where, FLinearColor(1.f, 0.5f, 0.1f), 2.6f, 3000.f, 0.6f);
+	JJFX::Explosion(GetWorld(), Where, 1.2f);
 	TArray<AActor*> Ignore;
 	Ignore.Add(this);
 	UGameplayStatics::ApplyRadialDamage(this, 130.f, Where, 1100.f, UDamageType::StaticClass(), Ignore, this, nullptr, false, ECC_Visibility);

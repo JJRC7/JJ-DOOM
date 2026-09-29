@@ -6,6 +6,7 @@
 #include "JJEnemy.h"
 #include "JJProjectile.h"
 #include "JJFlash.h"
+#include "JJFX.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -421,13 +422,11 @@ void AJJCharacter::FireWeapon()
 				continue;
 			}
 			AActor* Target = Hit.GetActor();
-			const bool bFlesh = Cast<AJJEnemy>(Target) != nullptr;
 			if (Target)
 			{
 				UGameplayStatics::ApplyPointDamage(Target, FMath::FRandRange(W.DamageMin, W.DamageMax), Dir, Hit, GetController(), this, UDamageType::StaticClass());
 			}
-			AJJFlash::Spawn(GetWorld(), Hit.ImpactPoint + Hit.ImpactNormal * 4.f,
-				bFlesh ? FLinearColor(0.4f, 0.f, 0.f) : FLinearColor(0.55f, 0.5f, 0.42f), 0.08f, bFlesh ? 0.f : 10.f, 0.25f);
+			JJFX::Sparks(GetWorld(), Hit.ImpactPoint, Hit.ImpactNormal);
 		}
 	}
 	AddControllerPitchInput(W.bRocket ? -0.6f : -0.12f);
