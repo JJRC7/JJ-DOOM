@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
+#include "Misc/PackageName.h"
 #include "Engine/World.h"
 
 AJJGameMode::AJJGameMode()
@@ -48,6 +49,29 @@ AJJGameMode* AJJGameMode::Get(const UObject* WorldContext)
 
 void AJJGameMode::StartPlay()
 {
+	// Si el juego usa este modo de juego base pero existe /Game/BP_GameMode (creado en el editor),
+	// se copian de él los modelos de monstruos y armas y el constructor de niveles.
+	// Así funciona aunque "Default GameMode" en la configuración del proyecto no apunte a BP_GameMode.
+	if (GetClass() == AJJGameMode::StaticClass() && FPackageName::DoesPackageExist(TEXT("/Game/BP_GameMode")))
+	{
+		if (UClass* BlueprintClass = LoadClass<AJJGameMode>(nullptr, TEXT("/Game/BP_GameMode.BP_GameMode_C")))
+		{
+			const AJJGameMode* Defaults = BlueprintClass->GetDefaultObject<AJJGameMode>();
+			if (MonsterVisuals.Num() == 0)
+			{
+				MonsterVisuals = Defaults->MonsterVisuals;
+			}
+			if (WeaponVisuals.Num() == 0)
+			{
+				WeaponVisuals = Defaults->WeaponVisuals;
+			}
+			if (Defaults->BuilderClass)
+			{
+				BuilderClass = Defaults->BuilderClass;
+			}
+		}
+	}
+
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	UClass* Class = BuilderClass ? BuilderClass.Get() : AJJLevelBuilder::StaticClass();
