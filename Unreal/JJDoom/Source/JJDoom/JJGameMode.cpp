@@ -340,9 +340,9 @@ void AJJGameMode::MenuBack()
 	if (Menu == EJJMenu::Options)
 	{
 		OpenMenu(MenuParent);
-		TArray<EJJMenuItem> Items;
-		GetMenuItems(Items);
-		MenuIndex = FMath::Max(0, Items.IndexOfByKey(EJJMenuItem::Options));
+		TArray<EJJMenuItem> MenuItems;
+		GetMenuItems(MenuItems);
+		MenuIndex = FMath::Max(0, MenuItems.IndexOfByKey(EJJMenuItem::Options));
 	}
 	else if (Menu == EJJMenu::Pause)
 	{
@@ -352,24 +352,24 @@ void AJJGameMode::MenuBack()
 
 void AJJGameMode::MenuMove(int32 Dir)
 {
-	TArray<EJJMenuItem> Items;
-	GetMenuItems(Items);
-	if (Items.Num() > 0)
+	TArray<EJJMenuItem> MenuItems;
+	GetMenuItems(MenuItems);
+	if (MenuItems.Num() > 0)
 	{
-		MenuIndex = (MenuIndex + Dir + Items.Num()) % Items.Num();
+		MenuIndex = (MenuIndex + Dir + MenuItems.Num()) % MenuItems.Num();
 	}
 }
 
 void AJJGameMode::MenuAdjust(int32 Dir)
 {
-	TArray<EJJMenuItem> Items;
-	GetMenuItems(Items);
-	if (!Items.IsValidIndex(MenuIndex))
+	TArray<EJJMenuItem> MenuItems;
+	GetMenuItems(MenuItems);
+	if (!MenuItems.IsValidIndex(MenuIndex))
 	{
 		return;
 	}
 	UGameUserSettings* US = JJUserSettings();
-	switch (Items[MenuIndex])
+	switch (MenuItems[MenuIndex])
 	{
 	case EJJMenuItem::Difficulty:
 		SetDifficulty((Difficulty + Dir + 4) % 4);
@@ -415,13 +415,13 @@ void AJJGameMode::MenuAdjust(int32 Dir)
 
 void AJJGameMode::MenuAccept()
 {
-	TArray<EJJMenuItem> Items;
-	GetMenuItems(Items);
-	if (!Items.IsValidIndex(MenuIndex))
+	TArray<EJJMenuItem> MenuItems;
+	GetMenuItems(MenuItems);
+	if (!MenuItems.IsValidIndex(MenuIndex))
 	{
 		return;
 	}
-	switch (Items[MenuIndex])
+	switch (MenuItems[MenuIndex])
 	{
 	case EJJMenuItem::Play:
 		CloseMenu();
