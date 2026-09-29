@@ -95,7 +95,10 @@ void AJJProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			UGameplayStatics::ApplyPointDamage(OtherActor, Damage, GetActorForwardVector(), Hit, InstigatorController, this, UDamageType::StaticClass());
 		}
 		AJJFlash::Spawn(GetWorld(), Where, Color, 0.6f, 300.f, 0.3f);
-		JJFX::Sparks(GetWorld(), Where, Hit.ImpactNormal);
+		if (OtherActor && OtherActor->IsA<APawn>())
+		{
+			JJFX::Sparks(GetWorld(), Where, Hit.ImpactNormal);
+		}
 	}
 	Destroy();
 }

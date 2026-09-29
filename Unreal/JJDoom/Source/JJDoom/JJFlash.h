@@ -20,6 +20,9 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	// Hace que el destello salga disparado y caiga (para chispas); además encoge en vez de crecer.
+	void SetMotion(const FVector& InVelocity, float InGravity);
+
 private:
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> Ball;
@@ -31,4 +34,7 @@ private:
 	float Age = 0.f;
 	float BaseSize = 0.1f;
 	float BaseIntensity = 0.f;
+	FVector Velocity = FVector::ZeroVector;
+	float Gravity = 0.f;
+	bool bShrink = false;
 };

@@ -34,6 +34,7 @@ private:
 	void BuildBody();
 	bool TryUseMannequin(const FLinearColor& Color, float Scale);
 	bool TryUseCustomModel();
+	void EnableMeshHits();
 	bool CanSee(const APawn* Player) const;
 	void FaceTowards(const FVector& Where);
 	void StartAttack(bool bClose);

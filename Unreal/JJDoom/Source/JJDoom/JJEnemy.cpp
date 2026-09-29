@@ -152,11 +152,21 @@ bool AJJEnemy::TryUseMannequin(const FLinearColor& Color, float Scale)
 	Body->SetVisibility(false);
 	Head->SetVisibility(false);
 	Eyes->SetVisibility(false);
+	EnableMeshHits();
 	bMannequin = true;
 	return true;
 }
 
 // Modelo real asignado en el Blueprint del modo de juego (por ejemplo, un monstruo de Fab).
+// El cuerpo real del modelo recibe los disparos (no solo la cápsula invisible, que puede ser más pequeña).
+void AJJEnemy::EnableMeshHits()
+{
+	USkeletalMeshComponent* Skin = GetMesh();
+	Skin->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Skin->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Skin->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+}
+
 bool AJJEnemy::TryUseCustomModel()
 {
 	const AJJGameMode* GM = AJJGameMode::Get(this);
@@ -186,6 +196,7 @@ bool AJJEnemy::TryUseCustomModel()
 		}
 	}
 	DeathAnim = Visual->DeathAnimation;
+	EnableMeshHits();
 	for (UStaticMeshComponent* Part : { Body.Get(), Head.Get(), Eyes.Get(), HornL.Get(), HornR.Get() })
 	{
 		Part->SetVisibility(false);
@@ -571,6 +582,7 @@ void AJJEnemy::Die()
 	// Al morir, el enemigo explota y desaparece.
 	JJFX::Explosion(GetWorld(), GetActorLocation(), FMath::Max(0.6f, FJJEnemyDef::Get(Kind).Scale));
 	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
 	State = EJJEnemyState::Dead;
 	SetLifeSpan(0.3f);
 

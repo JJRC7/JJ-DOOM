@@ -26,24 +26,26 @@ void JJFX::Sparks(UWorld* World, const FVector& Where, const FVector& Normal)
 	{
 		return;
 	}
-	static UParticleSystem* SparkSystem = nullptr;
-	static bool bLooked = false;
-	if (!bLooked)
+	const FVector N = Normal.IsNearlyZero() ? FVector::UpVector : Normal.GetSafeNormal();
+	const FVector Point = Where + N * 6.f;
+	// Chispazo con luz (muy breve) y varias chispas amarillas que saltan, caen y se apagan.
+	AJJFlash::Spawn(World, Point, FLinearColor(1.f, 0.8f, 0.15f), 0.06f, 150.f, 0.1f);
+	for (int32 I = 0; I < 10; ++I)
 	{
-		bLooked = true;
-		SparkSystem = JJFindStarterAsset<UParticleSystem>(TEXT("Particles"), TEXT("P_Sparks"));
-		if (SparkSystem)
+		if (AJJFlash* Spark = AJJFlash::Spawn(World, Point, FLinearColor(1.f, 0.85f, 0.05f), 0.03f, 0.f, FMath::FRandRange(0.18f, 0.35f)))
 		{
-			SparkSystem->AddToRoot();
+			Spark->SetMotion(FMath::VRandCone(N, FMath::DegreesToRadians(70.f)) * FMath::FRandRange(350.f, 900.f), 1400.f);
 		}
 	}
-	const FVector Point = Where + Normal * 4.f;
-	if (SparkSystem)
+}
+
+void JJFX::Dust(UWorld* World, const FVector& Where, const FVector& Normal)
+{
+	if (!World)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(World, SparkSystem, Point, Normal.Rotation(), FVector(0.35f), true);
+		return;
 	}
-	// Chispazo de luz breve (sin sombras, barato).
-	AJJFlash::Spawn(World, Point, FLinearColor(1.f, 0.7f, 0.25f), SparkSystem ? 0.f : 0.06f, 60.f, 0.12f);
+	AJJFlash::Spawn(World, Where + Normal * 4.f, FLinearColor(0.3f, 0.28f, 0.25f), 0.07f, 0.f, 0.2f);
 }
 
 void JJFX::Explosion(UWorld* World, const FVector& Where, float Scale)

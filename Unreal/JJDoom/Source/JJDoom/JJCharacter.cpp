@@ -417,7 +417,8 @@ void AJJCharacter::FireWeapon()
 		{
 			const FVector Dir = FMath::VRandCone(Aim, W.Spread);
 			FHitResult Hit;
-			if (!GetWorld()->LineTraceSingleByChannel(Hit, Eye, Eye + Dir * 12000.f, ECC_Visibility, Query))
+			// Barrido con una esfera pequeña: es más fácil acertar que con una línea finísima.
+			if (!GetWorld()->SweepSingleByChannel(Hit, Eye, Eye + Dir * 12000.f, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(10.f), Query))
 			{
 				continue;
 			}
@@ -426,7 +427,14 @@ void AJJCharacter::FireWeapon()
 			{
 				UGameplayStatics::ApplyPointDamage(Target, FMath::FRandRange(W.DamageMin, W.DamageMax), Dir, Hit, GetController(), this, UDamageType::StaticClass());
 			}
-			JJFX::Sparks(GetWorld(), Hit.ImpactPoint, Hit.ImpactNormal);
+			if (Cast<AJJEnemy>(Target))
+			{
+				JJFX::Sparks(GetWorld(), Hit.ImpactPoint, Hit.ImpactNormal);
+			}
+			else
+			{
+				JJFX::Dust(GetWorld(), Hit.ImpactPoint, Hit.ImpactNormal);
+			}
 		}
 	}
 	AddControllerPitchInput(W.bRocket ? -0.6f : -0.12f);

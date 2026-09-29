@@ -43,6 +43,13 @@ AJJFlash* AJJFlash::Spawn(UWorld* World, const FVector& Where, const FLinearColo
 	return Flash;
 }
 
+void AJJFlash::SetMotion(const FVector& InVelocity, float InGravity)
+{
+	Velocity = InVelocity;
+	Gravity = InGravity;
+	bShrink = true;
+}
+
 void AJJFlash::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -53,6 +60,15 @@ void AJJFlash::Tick(float DeltaSeconds)
 		Destroy();
 		return;
 	}
-	Ball->SetRelativeScale3D(FVector(BaseSize * (1.f + A * 1.5f)));
+	if (bShrink)
+	{
+		AddActorWorldOffset(Velocity * DeltaSeconds);
+		Velocity.Z -= Gravity * DeltaSeconds;
+		Ball->SetRelativeScale3D(FVector(BaseSize * (1.f - A)));
+	}
+	else
+	{
+		Ball->SetRelativeScale3D(FVector(BaseSize * (1.f + A * 1.5f)));
+	}
 	Light->SetIntensity(BaseIntensity * (1.f - A));
 }
