@@ -30,6 +30,7 @@ public:
 	TSubclassOf<AJJLevelBuilder> BuilderClass;
 
 	// Dificultad: multiplica la vida de los enemigos y el daño que hacen.
+	// Ahora lo controla el menú de dificultad (Fácil, Normal, Difícil, Pesadilla).
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "JJ|Dificultad")
 	float EnemyHealthMultiplier = 2.5f;
 
@@ -57,6 +58,36 @@ public:
 	void PlacePlayer(AJJCharacter* Player);
 	AJJLevelBuilder* GetBuilder() const { return Builder; }
 
+	// ---- Menús (inicio, pausa y opciones gráficas) ----
+	void OpenMenu(EJJMenu NewMenu);
+	void CloseMenu();
+	void TogglePause();
+	void MenuBack();
+	void MenuMove(int32 Dir);
+	void MenuAdjust(int32 Dir);
+	void MenuAccept();
+	void GetMenuItems(TArray<EJJMenuItem>& Out) const;
+	FString GetMenuLabel(EJJMenuItem Item) const;
+	FString GetMenuValue(EJJMenuItem Item) const;
+	FString GetMenuHint(EJJMenuItem Item) const;
+	// Mantiene la pausa y el cursor del ratón de acuerdo con el menú abierto.
+	void SyncMenuState();
+
+	// ---- Ajustes (se guardan en GameUserSettings.ini) ----
+	static const TCHAR* DifficultyName(int32 Level);
+	void SetDifficulty(int32 Level);
+	int32 GetBrightness() const;
+	void SetBrightness(int32 Level);
+	void SetScreenPercentage(int32 Percent);
+	void SaveOptions() const;
+
+	EJJMenu Menu = EJJMenu::None;
+	EJJMenu MenuParent = EJJMenu::Main;
+	int32 MenuIndex = 0;
+	int32 Difficulty = 1;
+	int32 ScreenPercentage = 85;
+	bool bShowFPS = false;
+
 	EJJGameState State = EJJGameState::Playing;
 	FString Message;
 	float MessageTime = 0.f;
@@ -70,6 +101,12 @@ public:
 
 private:
 	void StartLevel(int32 Index, bool bNewGame);
+	void LoadOptions();
+	void RestartLevel();
+
+	// El nivel de fondo del menú principal está recién creado (Jugar no necesita reconstruirlo).
+	bool bFreshLevel = false;
+	int32 SavedBrightness = -1;
 
 	UPROPERTY()
 	TObjectPtr<AJJLevelBuilder> Builder;

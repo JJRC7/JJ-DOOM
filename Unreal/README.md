@@ -44,8 +44,23 @@ Lo que aporta Unreal frente a la versión web:
 | 1-4 / rueda | Cambiar de arma |
 | Enter | Continuar tras terminar el nivel o al morir |
 | + / − (o Re Pág / Av Pág) | Subir / bajar el brillo |
+| P / Esc (Start en mando) | Menú de pausa |
 
 También funciona con mando (Xbox/PlayStation).
+
+## Menús
+
+El juego empieza en el **menú de inicio**: Jugar, Dificultad, Opciones gráficas y Salir.
+Con **P** (o Esc fuera del editor) se abre el **menú de pausa**: Continuar, Reiniciar nivel,
+Dificultad, Opciones gráficas, Menú principal y Salir.
+
+- Navegar: W/S o flechas (o el ratón). Cambiar un valor: A/D, flechas o clic (clic derecho = bajar).
+- **Dificultad**: Fácil, Normal, Difícil o Pesadilla (vida y daño de los enemigos). Se aplica al momento.
+- **Opciones gráficas**: Calidad (Baja/Media/Alta/Épica), Resolución (50-100 %), Brillo, Sincronía vertical y Mostrar FPS.
+- Todo se guarda y se recuerda la próxima vez que juegues.
+
+> En el editor, **Esc** detiene la partida. Usa **P** para pausar, o juega con
+> *Play → Standalone Game* para que Esc abra la pausa.
 
 ## Estructura del código (`Source/JJDoom`)
 
@@ -57,7 +72,7 @@ También funciona con mando (Xbox/PlayStation).
 | `JJEnemy` | 8 tipos de enemigo con IA (perseguir, disparar, embestir, volar). |
 | `JJTypes.cpp` | Estadísticas de enemigos y armas (vida, daño, velocidad...). |
 | `JJGameMode` | Niveles, salida, muerte, victoria y estadísticas. |
-| `JJHUD` | Interfaz: salud, armadura, munición, llaves, mensajes. |
+| `JJHUD` | Interfaz: barras de salud, armadura y munición, armas, llaves, mira, mensajes y los menús. |
 | `JJDoor`, `JJExitSwitch`, `JJPickup`, `JJBarrel`, `JJProjectile`, `JJFlash` | Puertas, salida, objetos, barriles, proyectiles y destellos. |
 
 ## Hacerlo más realista (sin programar)

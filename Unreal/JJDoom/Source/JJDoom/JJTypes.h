@@ -27,6 +27,11 @@ enum class EJJKey : uint8 { None, Red, Blue };
 UENUM(BlueprintType)
 enum class EJJGameState : uint8 { Playing, Exiting, Intermission, Victory, Dead };
 
+// Menús dibujados en el HUD (el juego se pausa mientras hay uno abierto).
+enum class EJJMenu : uint8 { None, Main, Pause, Options };
+
+enum class EJJMenuItem : uint8 { Play, Resume, Restart, Difficulty, Options, Quality, Resolution, Brightness, VSync, ShowFPS, Back, MainMenu, Quit };
+
 enum class EJJAttack : uint8 { Hitscan, Shotgun, Projectile, Melee, Charge };
 
 enum class EJJEnemyState : uint8 { Idle, Chase, Attack, Pain, Charge, Dying, Dead };

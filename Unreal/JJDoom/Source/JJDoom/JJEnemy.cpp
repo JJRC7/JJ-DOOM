@@ -69,6 +69,17 @@ bool AJJEnemy::IsBoss() const
 	return FJJEnemyDef::Get(Kind).bBoss;
 }
 
+void AJJEnemy::ApplyDifficulty(float NewHealthMul, float NewDamageMul)
+{
+	NewHealthMul = FMath::Max(0.1f, NewHealthMul);
+	if (IsAlive())
+	{
+		Health *= NewHealthMul / HealthMul;
+	}
+	HealthMul = NewHealthMul;
+	DamageMul = FMath::Max(0.1f, NewDamageMul);
+}
+
 void AJJEnemy::BeginPlay()
 {
 	Super::BeginPlay();

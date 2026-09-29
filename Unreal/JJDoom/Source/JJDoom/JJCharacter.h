@@ -30,12 +30,15 @@ public:
 	bool SelectWeapon(EJJWeapon Weapon);
 	void Revive();
 	bool IsDead() const { return bDead; }
+	void CancelFire() { bFiring = false; }
 
 	FJJInventory Inv;
 	bool bRedKey = false;
 	bool bBlueKey = false;
 	float DamageFlash = 0.f;
 	float PickupFlash = 0.f;
+	// Marca de acierto en la mira (se activa al dar a un enemigo).
+	float HitMarker = 0.f;
 
 private:
 	void MoveForward(float Value);
@@ -61,6 +64,15 @@ private:
 	void BrightnessUp();
 	void BrightnessDown();
 	void ChangeBrightness(float Steps);
+	void MenuPause();
+	void MenuBack();
+	void MenuUp();
+	void MenuDown();
+	void MenuLeft();
+	void MenuRight();
+	void MenuAccept();
+	void MenuClick();
+	void MenuClickAlt();
 
 	void FireWeapon();
 	void AutoSwitch();

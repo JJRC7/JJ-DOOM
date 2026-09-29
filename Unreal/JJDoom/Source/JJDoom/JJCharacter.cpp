@@ -7,6 +7,8 @@
 #include "JJProjectile.h"
 #include "JJFlash.h"
 #include "JJFX.h"
+#include "JJHUD.h"
+#include "GameFramework/PlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -130,12 +132,28 @@ void AJJCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Input->BindAction(TEXT("PrevWeapon"), IE_Pressed, this, &AJJCharacter::PrevWeapon);
 	Input->BindAction(TEXT("BrightnessUp"), IE_Pressed, this, &AJJCharacter::BrightnessUp);
 	Input->BindAction(TEXT("BrightnessDown"), IE_Pressed, this, &AJJCharacter::BrightnessDown);
+
+	// Teclas de los menús: funcionan también con el juego en pausa.
+	auto BindMenu = [Input, this](const TCHAR* Name, void (AJJCharacter::*Func)())
+	{
+		FInputActionBinding& Binding = Input->BindAction(Name, IE_Pressed, this, Func);
+		Binding.bExecuteWhenPaused = true;
+	};
+	BindMenu(TEXT("Pause"), &AJJCharacter::MenuPause);
+	BindMenu(TEXT("MenuBack"), &AJJCharacter::MenuBack);
+	BindMenu(TEXT("MenuUp"), &AJJCharacter::MenuUp);
+	BindMenu(TEXT("MenuDown"), &AJJCharacter::MenuDown);
+	BindMenu(TEXT("MenuLeft"), &AJJCharacter::MenuLeft);
+	BindMenu(TEXT("MenuRight"), &AJJCharacter::MenuRight);
+	BindMenu(TEXT("MenuAccept"), &AJJCharacter::MenuAccept);
+	BindMenu(TEXT("MenuClick"), &AJJCharacter::MenuClick);
+	BindMenu(TEXT("MenuClickAlt"), &AJJCharacter::MenuClickAlt);
 }
 
 bool AJJCharacter::CanAct() const
 {
 	const AJJGameMode* GM = AJJGameMode::Get(this);
-	return !bDead && GM && GM->State == EJJGameState::Playing;
+	return !bDead && GM && GM->State == EJJGameState::Playing && GM->Menu == EJJMenu::None;
 }
 
 void AJJCharacter::MoveForward(float Value)
@@ -206,7 +224,8 @@ void AJJCharacter::ToggleFlashlight()
 
 void AJJCharacter::Continue()
 {
-	if (AJJGameMode* GM = AJJGameMode::Get(this))
+	AJJGameMode* GM = AJJGameMode::Get(this);
+	if (GM && GM->Menu == EJJMenu::None)
 	{
 		GM->OnContinuePressed();
 	}
@@ -224,11 +243,71 @@ void AJJCharacter::BrightnessDown() { ChangeBrightness(-1.f); }
 
 void AJJCharacter::ChangeBrightness(float Steps)
 {
-	AJJGameMode* GM = AJJGameMode::Get(this);
-	if (GM && GM->GetBuilder())
+	if (AJJGameMode* GM = AJJGameMode::Get(this))
 	{
-		const int32 Level = GM->GetBuilder()->ChangeBrightness(Steps);
-		GM->ShowMessage(FString::Printf(TEXT("Brillo: %d / 16"), Level), 1.5f);
+		GM->SetBrightness(GM->GetBrightness() + FMath::RoundToInt(Steps));
+		GM->ShowMessage(FString::Printf(TEXT("Brillo: %d / 16"), GM->GetBrightness()), 1.5f);
+	}
+}
+
+void AJJCharacter::MenuPause()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->TogglePause();
+}
+
+void AJJCharacter::MenuBack()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->MenuBack();
+}
+
+void AJJCharacter::MenuUp()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->MenuMove(-1);
+}
+
+void AJJCharacter::MenuDown()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->MenuMove(1);
+}
+
+void AJJCharacter::MenuLeft()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->MenuAdjust(-1);
+}
+
+void AJJCharacter::MenuRight()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->MenuAdjust(1);
+}
+
+void AJJCharacter::MenuAccept()
+{
+	if (AJJGameMode* GM = AJJGameMode::Get(this)) GM->MenuAccept();
+}
+
+void AJJCharacter::MenuClick()
+{
+	// Clic izquierdo: activa (o sube el valor de) la opción que está bajo el ratón.
+	AJJGameMode* GM = AJJGameMode::Get(this);
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	const AJJHUD* HUD = PC ? Cast<AJJHUD>(PC->GetHUD()) : nullptr;
+	if (GM && HUD && GM->Menu != EJJMenu::None && HUD->HoveredRow >= 0)
+	{
+		GM->MenuIndex = HUD->HoveredRow;
+		GM->MenuAccept();
+	}
+}
+
+void AJJCharacter::MenuClickAlt()
+{
+	// Clic derecho: baja el valor de la opción que está bajo el ratón.
+	AJJGameMode* GM = AJJGameMode::Get(this);
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	const AJJHUD* HUD = PC ? Cast<AJJHUD>(PC->GetHUD()) : nullptr;
+	if (GM && HUD && GM->Menu != EJJMenu::None && HUD->HoveredRow >= 0)
+	{
+		GM->MenuIndex = HUD->HoveredRow;
+		GM->MenuAdjust(-1);
 	}
 }
 
@@ -355,6 +434,7 @@ void AJJCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	DamageFlash = FMath::Max(0.f, DamageFlash - DeltaSeconds * 1.5f);
 	PickupFlash = FMath::Max(0.f, PickupFlash - DeltaSeconds * 2.f);
+	HitMarker = FMath::Max(0.f, HitMarker - DeltaSeconds);
 
 	if (bDead)
 	{
@@ -430,6 +510,7 @@ void AJJCharacter::FireWeapon()
 			if (Cast<AJJEnemy>(Target))
 			{
 				JJFX::Sparks(GetWorld(), Hit.ImpactPoint, Hit.ImpactNormal);
+				HitMarker = 0.25f;
 			}
 			else
 			{

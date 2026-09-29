@@ -29,6 +29,8 @@ public:
 	void Wake();
 	bool IsAlive() const { return State != EJJEnemyState::Dying && State != EJJEnemyState::Dead; }
 	bool IsBoss() const;
+	// Cambia la dificultad de un enemigo ya creado (conserva el porcentaje de vida que le queda).
+	void ApplyDifficulty(float NewHealthMul, float NewDamageMul);
 
 private:
 	void BuildBody();
