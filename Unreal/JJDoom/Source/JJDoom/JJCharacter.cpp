@@ -62,7 +62,8 @@ AJJCharacter::AJJCharacter()
 
 	Flashlight = CreateDefaultSubobject<USpotLightComponent>(TEXT("Flashlight"));
 	Flashlight->SetupAttachment(Camera);
-	Flashlight->SetRelativeLocation(FVector(10.f, 15.f, -15.f));
+	// La linterna sale por delante del arma: un foco solo ilumina hacia delante, así no quema el arma.
+	Flashlight->SetRelativeLocation(FVector(90.f, 0.f, -8.f));
 
 	UCharacterMovementComponent* Move = GetCharacterMovement();
 	Move->MaxWalkSpeed = JJWalkSpeed;
