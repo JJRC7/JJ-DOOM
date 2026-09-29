@@ -52,7 +52,7 @@ void AJJGameMode::StartPlay()
 	// Si el juego usa este modo de juego base pero existe /Game/BP_GameMode (creado en el editor),
 	// se copian de él los modelos de monstruos y armas y el constructor de niveles.
 	// Así funciona aunque "Default GameMode" en la configuración del proyecto no apunte a BP_GameMode.
-	if (GetClass() == AJJGameMode::StaticClass() && FPackageName::DoesPackageExist(TEXT("/Game/BP_GameMode")))
+	if (GetClass() == AJJGameMode::StaticClass() && FPackageName::DoesPackageExist(FString(TEXT("/Game/BP_GameMode"))))
 	{
 		if (UClass* BlueprintClass = LoadClass<AJJGameMode>(nullptr, TEXT("/Game/BP_GameMode.BP_GameMode_C")))
 		{
