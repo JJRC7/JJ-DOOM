@@ -8,6 +8,7 @@
 #include "JJBarrel.h"
 #include "JJProjectile.h"
 #include "JJFlash.h"
+#include "JJBulletHole.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/DirectionalLightComponent.h"
@@ -324,6 +325,7 @@ void AJJLevelBuilder::Clear()
 	JJDestroyAll<AJJBarrel>(World);
 	JJDestroyAll<AJJProjectile>(World);
 	JJDestroyAll<AJJFlash>(World);
+	JJDestroyAll<AJJBulletHole>(World);
 	for (TPair<int32, TObjectPtr<UInstancedStaticMeshComponent>>& Pair : ISMs)
 	{
 		if (Pair.Value)

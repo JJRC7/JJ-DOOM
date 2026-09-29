@@ -73,7 +73,10 @@ void AJJEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	const FJJEnemyDef& D = FJJEnemyDef::Get(Kind);
-	Health = D.Health;
+	const AJJGameMode* Mode = AJJGameMode::Get(this);
+	HealthMul = Mode ? FMath::Max(0.1f, Mode->EnemyHealthMultiplier) : 1.f;
+	DamageMul = Mode ? FMath::Max(0.1f, Mode->EnemyDamageMultiplier) : 1.f;
+	Health = D.Health * HealthMul;
 	Seed = FMath::FRand() * 10.f;
 	Cooldown = FMath::FRandRange(0.5f, 1.5f);
 
@@ -420,7 +423,7 @@ void AJJEnemy::Tick(float DeltaSeconds)
 		GetCharacterMovement()->Velocity = ChargeDir * 2600.f;
 		if ((Player->GetActorLocation() - GetActorLocation()).Size() < 160.f)
 		{
-			UGameplayStatics::ApplyDamage(Player, FMath::FRandRange(D.MeleeMin, D.MeleeMax), GetController(), this, UDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(Player, FMath::FRandRange(D.MeleeMin, D.MeleeMax) * DamageMul, GetController(), this, UDamageType::StaticClass());
 			GetCharacterMovement()->Velocity = FVector::ZeroVector;
 			State = EJJEnemyState::Chase;
 			Cooldown = FMath::FRandRange(D.CooldownMin, D.CooldownMax);
@@ -502,7 +505,7 @@ void AJJEnemy::DoAttack(APawn* Player, float Distance)
 	{
 		if (Distance < 260.f)
 		{
-			UGameplayStatics::ApplyDamage(Player, FMath::FRandRange(D.MeleeMin, D.MeleeMax), MyController, this, UDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(Player, FMath::FRandRange(D.MeleeMin, D.MeleeMax) * DamageMul, MyController, this, UDamageType::StaticClass());
 		}
 		return;
 	}
@@ -526,7 +529,7 @@ void AJJEnemy::DoAttack(APawn* Player, float Distance)
 		}
 		if (Damage > 0.f)
 		{
-			UGameplayStatics::ApplyDamage(Player, Damage, MyController, this, UDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(Player, Damage * DamageMul, MyController, this, UDamageType::StaticClass());
 		}
 	}
 	else if (D.Attack == EJJAttack::Projectile)
@@ -534,7 +537,7 @@ void AJJEnemy::DoAttack(APawn* Player, float Distance)
 		const FVector Aim = (Player->GetPawnViewLocation() - FVector(0.f, 0.f, 20.f) - Muzzle).GetSafeNormal();
 		TArray<float> Offsets = { 0.f };
 		// El Barón herido lanza tres bolas en abanico.
-		if (D.bBoss && Health < D.Health * 0.5f)
+		if (D.bBoss && Health < D.Health * HealthMul * 0.5f)
 		{
 			Offsets.Add(-8.f);
 			Offsets.Add(8.f);
@@ -542,7 +545,7 @@ void AJJEnemy::DoAttack(APawn* Player, float Distance)
 		for (const float Offset : Offsets)
 		{
 			const FVector Dir = Aim.RotateAngleAxis(Offset + FMath::FRandRange(-2.f, 2.f), FVector::UpVector);
-			AJJProjectile::Fire(GetWorld(), this, Muzzle, Dir, FMath::FRandRange(D.ShotMin, D.ShotMax), D.ProjSpeed, D.ProjColor, false,
+			AJJProjectile::Fire(GetWorld(), this, Muzzle, Dir, FMath::FRandRange(D.ShotMin, D.ShotMax) * DamageMul, D.ProjSpeed, D.ProjColor, false,
 				Kind == EJJEnemyKind::Baron ? 0.45f : 0.35f);
 		}
 	}

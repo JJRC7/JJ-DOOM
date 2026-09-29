@@ -29,6 +29,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "JJ")
 	TSubclassOf<AJJLevelBuilder> BuilderClass;
 
+	// Dificultad: multiplica la vida de los enemigos y el daño que hacen.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "JJ|Dificultad")
+	float EnemyHealthMultiplier = 2.5f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "JJ|Dificultad")
+	float EnemyDamageMultiplier = 1.3f;
+
 	// Modelos 3D reales para los monstruos (tipo de enemigo -> modelo). Vacío = formas básicas.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "JJ|Modelos")
 	TMap<EJJEnemyKind, FJJMonsterVisual> MonsterVisuals;

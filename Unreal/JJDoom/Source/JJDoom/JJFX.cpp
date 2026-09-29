@@ -1,5 +1,6 @@
 #include "JJFX.h"
 #include "JJFlash.h"
+#include "JJBulletHole.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 #include "Sound/SoundBase.h"
@@ -30,6 +31,9 @@ void JJFX::Sparks(UWorld* World, const FVector& Where, const FVector& Normal)
 	const FVector Point = Where + N * 6.f;
 	// Chispazo con luz (muy breve) y varias chispas amarillas que saltan, caen y se apagan.
 	AJJFlash::Spawn(World, Point, FLinearColor(1.f, 0.8f, 0.15f), 0.06f, 150.f, 0.1f);
+	// Fogonazo de pólvora: bola naranja muy breve y una nube de humo gris que se abre y desaparece.
+	AJJFlash::Spawn(World, Point, FLinearColor(1.f, 0.35f, 0.05f), 0.1f, 0.f, 0.08f);
+	AJJFlash::Spawn(World, Point + N * 4.f, FLinearColor(0.18f, 0.17f, 0.16f), 0.08f, 0.f, 0.3f);
 	for (int32 I = 0; I < 10; ++I)
 	{
 		if (AJJFlash* Spark = AJJFlash::Spawn(World, Point, FLinearColor(1.f, 0.85f, 0.05f), 0.03f, 0.f, FMath::FRandRange(0.18f, 0.35f)))
@@ -46,6 +50,7 @@ void JJFX::Dust(UWorld* World, const FVector& Where, const FVector& Normal)
 		return;
 	}
 	AJJFlash::Spawn(World, Where + Normal * 4.f, FLinearColor(0.3f, 0.28f, 0.25f), 0.07f, 0.f, 0.2f);
+	AJJBulletHole::Spawn(World, Where, Normal);
 }
 
 void JJFX::Explosion(UWorld* World, const FVector& Where, float Scale)

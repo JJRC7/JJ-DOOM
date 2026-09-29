@@ -71,6 +71,8 @@ private:
 
 	EJJEnemyState State = EJJEnemyState::Idle;
 	float Health = 20.f;
+	float HealthMul = 1.f;
+	float DamageMul = 1.f;
 	float Cooldown = 1.f;
 	float StateTime = 0.f;
 	float FireAt = 0.f;

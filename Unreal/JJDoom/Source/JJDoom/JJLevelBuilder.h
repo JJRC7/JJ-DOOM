@@ -55,14 +55,14 @@ public:
 
 	// Exposición de la cámara (EV100): más bajo = imagen más clara. Se cambia en el juego con + y -.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "JJ|Luz")
-	float ExposureEV = 2.f;
+	float ExposureEV = 1.f;
 
 	// Sube (Steps > 0) o baja el brillo y devuelve el nivel resultante (0-16).
 	int32 ChangeBrightness(float Steps);
 
 	// Intensidad de las lámparas del techo (candelas).
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "JJ|Luz")
-	float LampCandelas = 250.f;
+	float LampCandelas = 350.f;
 
 private:
 	UInstancedStaticMeshComponent* GetISM(int32 Key, const FLinearColor& Color, UMaterialInterface* Override, bool bCollision);

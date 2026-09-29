@@ -65,6 +65,8 @@ void AJJGameMode::StartPlay()
 			{
 				WeaponVisuals = Defaults->WeaponVisuals;
 			}
+			EnemyHealthMultiplier = Defaults->EnemyHealthMultiplier;
+			EnemyDamageMultiplier = Defaults->EnemyDamageMultiplier;
 			if (Defaults->BuilderClass)
 			{
 				BuilderClass = Defaults->BuilderClass;
